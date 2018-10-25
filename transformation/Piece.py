@@ -7,4 +7,3 @@ class Piece(Enum):
     Bishop = 'B'
     Knight = 'N'
     Pawn = 'P'
-

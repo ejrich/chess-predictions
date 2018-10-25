@@ -2,43 +2,69 @@ from Square import Square
 from Color import Color
 from Piece import Piece
 
+def first(iterable, condition):
+    return next(x for x in iterable if condition(x))
+
 class Board:
-    squares = []
-    whitePieces = { Piece.Pawn: 8, Piece.Rook: 2, Piece.Bishop: 2, Piece.Knight: 2, Piece.Queen: 1, Piece.King: 1 }
-    blackPieces = { Piece.Pawn: 8, Piece.Rook: 2, Piece.Bishop: 2, Piece.Knight: 2, Piece.Queen: 1, Piece.King: 1 }
+    whitePieces = { Piece.Pawn: [], Piece.Rook: [], Piece.Bishop: [], Piece.Knight: [], Piece.Queen: [], Piece.King: [] }
+    blackPieces = { Piece.Pawn: [], Piece.Rook: [], Piece.Bishop: [], Piece.Knight: [], Piece.Queen: [], Piece.King: [] }
 
     def __init__(self):
+        self.squares = []
         self.__initializeBoard()
         self.__initializePieces()
 
     def move(self, color, piece, currentFile, currentRank, newFile, newRank, captureFile=None, captureRank=None, promotion=None):
         # Set the current square to empty
         self.__setSquare(currentFile, currentRank, None, None)
+
+        # Get the current piece
+        currentPiece = None
+        if color == Color.White:
+            currentPiece = first(self.whitePieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
+        elif color == Color.Black:
+            currentPiece = first(self.blackPieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
+
+        currentPiece['file'] = newFile
+        currentPiece['rank'] = newRank
+
         # Set the new square to the piece
         newSquare = self.squares[newFile][newRank]
 
+        # Handle taken pieces
         if newSquare.piece:
             if newSquare.color == Color.White:
-                self.whitePieces[newSquare.piece] -= 1
+                takenPiece = first(self.whitePieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
+                self.whitePieces[piece].remove(takenPiece)
             elif newSquare.color == Color.Black:
-                self.blackPieces[newSquare.piece] -= 1
-        elif captureFile != None and captureRank != None:
-            capturedSquare = self.squares[captureFile][captureRank]
-            if capturedSquare.color == Color.White:
-                self.whitePieces[capturedSquare.piece] -= 1
-            elif capturedSquare.color == Color.Black:
-                self.blackPieces[capturedSquare.piece] -= 1
+                takenPiece = first(self.blackPieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
+                self.blackPieces[piece].remove(takenPiece)
+        # Handle En Passant - none in this dataset to I'm not handling them
+        # elif captureFile != None and captureRank != None:
+        #     capturedSquare = self.squares[captureFile][captureRank]
+        #     if capturedSquare.color == Color.White:
+        #         self.whitePieces[capturedSquare.piece] -= 1
+        #     elif capturedSquare.color == Color.Black:
+        #         self.blackPieces[capturedSquare.piece] -= 1
 
         self.__setSquare(newFile, newRank, color, piece)
 
-        if promotion != None:
+        # Promote the piece if possible
+        if promotion:
+            if color == Color.White:
+                self.whitePieces[piece].remove(currentPiece)
+                self.whitePieces[promotion].append(currentPiece)
+            elif color == Color.Black:
+                self.blackPieces[piece].remove(currentPiece)
+                self.blackPieces[promotion].append(currentPiece)
+
             self.__setSquare(newFile, newRank, color, promotion)
 
     def __initializeBoard(self):
         for file in range(8):
-            self.squares[file] = [] 
+            self.squares.append([])
             for rank in range(8):
-                self.squares[file][rank] = Square()
+                self.squares[file].append(Square())
 
     def __initializePieces(self):
         self.__initializeHomeRank(Color.White, 0)
@@ -54,6 +80,10 @@ class Board:
     def __initializePawns(self, color, rank):
         for file in range(8):
             self.__setSquare(file, rank, color, Piece.Pawn)
+            if color == Color.White:
+                self.whitePieces[Piece.Pawn].append({ 'file': file, 'rank': rank })
+            else:
+                self.blackPieces[Piece.Pawn].append({ 'file': file, 'rank': rank })
 
     def __initializeHomeRank(self, color, rank):
         for file in range(8):
@@ -71,3 +101,8 @@ class Board:
                 piece = Piece.King
 
             self.__setSquare(file, rank, color, piece)
+
+            if color == Color.White:
+                self.whitePieces[piece].append({ 'file': file, 'rank': rank })
+            else:
+                self.blackPieces[piece].append({ 'file': file, 'rank': rank })
