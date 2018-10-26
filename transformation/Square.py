@@ -1,3 +1,6 @@
+from Color import Color
+from Piece import Piece
+
 class Square:
-    color = None
-    piece = None
+    color = Color.Empty
+    piece = ''

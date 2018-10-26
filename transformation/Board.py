@@ -2,28 +2,24 @@ from Square import Square
 from Color import Color
 from Piece import Piece
 
-def first(iterable, condition):
+def first(iterable, condition = lambda x : True):
     return next(x for x in iterable if condition(x))
 
 class Board:
-    whitePieces = { Piece.Pawn: [], Piece.Rook: [], Piece.Bishop: [], Piece.Knight: [], Piece.Queen: [], Piece.King: [] }
-    blackPieces = { Piece.Pawn: [], Piece.Rook: [], Piece.Bishop: [], Piece.Knight: [], Piece.Queen: [], Piece.King: [] }
-
     def __init__(self):
         self.squares = []
+        self.whitePieces = { Piece.Pawn: [], Piece.Rook: [], Piece.Bishop: [], Piece.Knight: [], Piece.Queen: [], Piece.King: [] }
+        self.blackPieces = { Piece.Pawn: [], Piece.Rook: [], Piece.Bishop: [], Piece.Knight: [], Piece.Queen: [], Piece.King: [] }
+
         self.__initializeBoard()
         self.__initializePieces()
 
-    def move(self, color, piece, currentFile, currentRank, newFile, newRank, captureFile=None, captureRank=None, promotion=None):
+    def move(self, color, piece, currentFile, currentRank, newFile, newRank, promotion=None):
         # Set the current square to empty
-        self.__setSquare(currentFile, currentRank, None, None)
+        self.__setSquare(currentFile, currentRank, Color.Empty, '')
 
         # Get the current piece
-        currentPiece = None
-        if color == Color.White:
-            currentPiece = first(self.whitePieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
-        elif color == Color.Black:
-            currentPiece = first(self.blackPieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
+        currentPiece = self.getPieceAtLocation(color, piece, currentFile, currentRank)
 
         currentPiece['file'] = newFile
         currentPiece['rank'] = newRank
@@ -33,12 +29,11 @@ class Board:
 
         # Handle taken pieces
         if newSquare.piece:
+            takenPiece = self.getPieceAtLocation(newSquare.color, newSquare.piece, newFile, newRank)
             if newSquare.color == Color.White:
-                takenPiece = first(self.whitePieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
-                self.whitePieces[piece].remove(takenPiece)
+                self.whitePieces[newSquare.piece].remove(takenPiece)
             elif newSquare.color == Color.Black:
-                takenPiece = first(self.blackPieces[piece], lambda x : x['file'] == currentFile and x['rank'] == currentRank)
-                self.blackPieces[piece].remove(takenPiece)
+                self.blackPieces[newSquare.piece].remove(takenPiece)
         # Handle En Passant - none in this dataset to I'm not handling them
         # elif captureFile != None and captureRank != None:
         #     capturedSquare = self.squares[captureFile][captureRank]
@@ -60,10 +55,32 @@ class Board:
 
             self.__setSquare(newFile, newRank, color, promotion)
 
+    def getPieceAtLocation(self, color, piece, file=None, rank=None):
+        pieces = self.whitePieces[piece] if color == Color.White else self.blackPieces[piece]
+
+        if file == None and rank == None:
+            return first(pieces)
+        elif file != None and rank == None:
+            return first(pieces, lambda x : x['file'] == file)
+        elif file == None and rank != None:
+            return first(pieces, lambda x : x['rank'] == rank)
+        else:
+            return first(pieces, lambda x : x['file'] == file and x['rank'] == rank)
+
+    def getAllPieces(self, color, piece, file=None, rank=None):
+        pieces = self.whitePieces[piece] if color == Color.White else self.blackPieces[piece]
+
+        if file == None and rank == None:
+            return pieces
+        elif file != None and rank == None:
+            return list(filter(lambda x : x['file'] == file, pieces))
+        else:
+            return list(filter(lambda x : x['rank'] == rank, pieces))
+
     def __initializeBoard(self):
         for file in range(8):
             self.squares.append([])
-            for rank in range(8):
+            for _ in range(8):
                 self.squares[file].append(Square())
 
     def __initializePieces(self):
