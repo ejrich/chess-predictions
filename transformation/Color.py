@@ -1,6 +1,6 @@
 from enum import Enum
 
 class Color(Enum):
-    Empty = 0
+    Empty = ''
     White = 1
     Black = 2

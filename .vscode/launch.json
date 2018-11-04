@@ -11,9 +11,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "../data/201801_games.pgn",
-                "../data/201801_games.csv"
+                "../data/201801_games_2.csv",
+                // "../models/201801_linear_regression.joblib"
+                "../models/201801_logistic_regression.joblib"
             ]
+            // "args": [
+            //     "../data/201801_games.pgn",
+            //     "../data/201801_games_2.csv"
+            // ]
         },
         {
             "name": "Python: Attach",
