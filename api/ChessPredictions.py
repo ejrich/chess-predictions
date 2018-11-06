@@ -8,6 +8,7 @@ CORS(app)
 
 linearRegression = joblib.load(os.path.join(os.path.dirname(__file__), '../models/201801_linear_regression.joblib'))
 logisticRegression = joblib.load(os.path.join(os.path.dirname(__file__), '../models/201801_logistic_regression.joblib'))
+randomForestRegression = joblib.load(os.path.join(os.path.dirname(__file__), '../models/201801_random_forest_regression.joblib'))
 
 pieces = ['P', 'B', 'R', 'N', 'Q', 'K']
 
@@ -17,6 +18,10 @@ def makeLinearPrediction(gameState):
 
 def makeLogisticPrediction(gameState):
     prediction = logisticRegression.predict([gameState])
+    return prediction[0]
+
+def makeRandomForestPrediction(gameState):
+    prediction = randomForestRegression.predict([gameState])
     return prediction[0]
 
 def translateGameState(gameState):
@@ -72,6 +77,16 @@ def logisticPrediction():
     predictionValue = makeLogisticPrediction(translation)
 
     return jsonify({ 'prediction': int(predictionValue) })
+
+@app.route('/prediction/random_forest', methods=['POST'])
+def randomForestPrediction():
+    gameState = request.json
+
+    translation = translateGameState(gameState)
+
+    predictionValue = makeRandomForestPrediction(translation)
+
+    return jsonify({ 'prediction': predictionValue })
 
 if __name__ == '__main__':
     app.run()

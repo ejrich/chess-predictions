@@ -13,7 +13,8 @@
             "args": [
                 "../data/201801_games_2.csv",
                 // "../models/201801_linear_regression.joblib"
-                "../models/201801_logistic_regression.joblib"
+                // "../models/201801_logistic_regression.joblib"
+                "../models/201801_random_forest_regression.joblib"
             ]
             // "args": [
             //     "../data/201801_games.pgn",

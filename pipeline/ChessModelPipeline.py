@@ -24,7 +24,6 @@ def createLinearRegression(dataFrame, all_columns, dummy_columns):
     X_train, X_test = create_feature_matrices(df_train, df_test, all_columns, dummy_columns)
 
     all_lr = SGDRegressor(max_iter=2000)
-    # all_lr = RandomForestRegressor(max_iter=2000)
     all_lr.fit(X_train, y_train)
     pred_result_all_test = all_lr.predict(X_test)
     all_mse = mean_squared_error(y_test, pred_result_all_test)
@@ -63,6 +62,26 @@ def createLogisticRegression(dataFrame, all_columns, dummy_columns):
 
     return all_lr
 
+def createRandomForestRegression(dataFrame, all_columns, dummy_columns):
+    df_train, df_test = train_test_split(dataFrame)
+
+    y_train = df_train["Result"].values
+    y_test = df_test["Result"].values
+
+    X_train, X_test = create_feature_matrices(df_train, df_test, all_columns, dummy_columns)
+
+    all_rf = RandomForestRegressor()
+    all_rf.fit(X_train, y_train)
+    pred_result_all_test = all_rf.predict(X_test)
+    all_mse = mean_squared_error(y_test, pred_result_all_test)
+    all_rmse = np.sqrt(all_mse)
+
+    print()
+    print("All Columns Model MSE:", all_mse)
+    print("All Columns Model RMSE:", all_rmse)
+
+    return all_rf
+
 def createModel(dataFile, modelFile):
     dataFrame = pd.read_csv(dataFile)
 
@@ -85,7 +104,8 @@ def createModel(dataFile, modelFile):
         dataFrame = dataFrame.drop(columns=col_name)
     
     # model = createLinearRegression(dataFrame, all_columns, dummy_columns)
-    model = createLogisticRegression(dataFrame, all_columns, dummy_columns)
+    # model = createLogisticRegression(dataFrame, all_columns, dummy_columns)
+    model = createRandomForestRegression(dataFrame, all_columns, dummy_columns)
 
     joblib.dump(model, modelFile)
 
