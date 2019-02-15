@@ -17,6 +17,8 @@ decrement = lambda x : x - 1
 same = lambda x : x
 increment = lambda x : x + 1
 
+pieceValues = { Piece.Pawn: 1, Piece.Rook: 2, Piece.Knight: 3, Piece.Bishop: 4, Piece.Queen: 5, Piece.King: 6 }
+
 class Game:
     def __init__(self):
         self.board = Board()
@@ -30,18 +32,29 @@ class Game:
     def simulateGame(self, notation):
         self.moves = re.split(moveRegex, notation)
 
+        # Record the board without moves
+        # self.__addGameState(2)
+
+        # Go through each of the moves
         for move in range(1, len(self.moves)):
             parts = self.moves[move].split(' ')
+
             # Last move of the game where only white moves
             if move == len(self.moves) - 1 and parts[1].startswith('{'):
-                self.__makeMove(Color.White, parts[0])
-                self.__addGameState()
+                self.__addGameState(move)
+                castle = self.__makeMove(Color.White, parts[0])
+                self.__saveMove(castle)
             # Normal moves
             else:
-                self.__makeMove(Color.White, parts[0])
-                self.__addGameState()
+                # Record the board state before the move
+                self.__addGameState(move)
+                castle = self.__makeMove(Color.White, parts[0])
+                self.__saveMove(castle)
+
+                # Record the board state before the move
+                # self.__addGameState(move * 2 + 2)
                 self.__makeMove(Color.Black, parts[1])
-                self.__addGameState()
+                # self.__saveMove()
 
     # Mave the specified move and add a new game state
     def __makeMove(self, color, move):
@@ -59,16 +72,18 @@ class Game:
             return
         kingSideCastle = re.match(kingSideCastleRegex, move)
         if kingSideCastle:
+            # raise Exception("Castling is annoying")
             rank = 0 if color == Color.White else 7
             self.board.move(color, Piece.King, 4, rank, 6, rank)
             self.board.move(color, Piece.Rook, 7, rank, 5, rank)
-            return
+            return 'Castle'
         queenSideCastle = re.match(queenSideCastleRegex, move)
         if queenSideCastle:
+            # raise Exception("Castling is annoying")
             rank = 0 if color == Color.White else 7
             self.board.move(color, Piece.King, 4, rank, 2, rank)
             self.board.move(color, Piece.Rook, 0, rank, 3, rank)
-            return
+            return 'Castle'
         promotion = re.match(promotionRegex, move)
         if promotion:
             self.__movePawn(color, promotion.group(1), promotion.group(2), Piece(promotion.group(3)))
@@ -193,41 +208,64 @@ class Game:
 
         return legal
 
-    def __addGameState(self):
-        # print()
-        # for rank in reversed(range(8)):
-        #     line = ''
-        #     for file in range(8):
-        #         piece = self.board.squares[file][rank].piece
-        #         if piece:
-        #             line += str(piece.value) + ' '
-        #         else:
-        #             line += '  '
-        #     print(line)
-        result = 1 if self.properties['Result'] == '1-0' else 0 if self.properties['Result'] == '0-1' else 0.5
-        gameState = { 'Result': result }
+    def __getPiece(self, square):
+        if square.piece == '':
+            return ''
+        return pieceValues[square.piece] + (0 if square.color == Color.White else 6)
 
-        gameState['WhitePawns'] = len(self.board.whitePieces[Piece.Pawn])
-        gameState['WhiteRooks'] = len(self.board.whitePieces[Piece.Rook])
-        gameState['WhiteBishops'] = len(self.board.whitePieces[Piece.Bishop])
-        gameState['WhiteKnights'] = len(self.board.whitePieces[Piece.Knight])
-        gameState['WhiteQueen'] = len(self.board.whitePieces[Piece.Queen])
-        gameState['WhiteKing'] = len(self.board.whitePieces[Piece.King])
-        gameState['WhiteTotal'] = gameState['WhitePawns'] + gameState['WhiteRooks'] + gameState['WhiteBishops'] + gameState['WhiteKnights'] + gameState['WhiteQueen'] + gameState['WhiteKing']
+    # Removed for the new deep learning approach
+    # def __addGameState(self, move):
+    #     result = 1 if self.properties['Result'] == '1-0' else 0 if self.properties['Result'] == '0-1' else 0.5
+    #     gameState = { 'Result': result }
 
-        gameState['BlackPawns'] = len(self.board.blackPieces[Piece.Pawn])
-        gameState['BlackRooks'] = len(self.board.blackPieces[Piece.Rook])
-        gameState['BlackBishops'] = len(self.board.blackPieces[Piece.Bishop])
-        gameState['BlackKnights'] = len(self.board.blackPieces[Piece.Knight])
-        gameState['BlackQueen'] = len(self.board.blackPieces[Piece.Queen])
-        gameState['BlackKing'] = len(self.board.blackPieces[Piece.King])
-        gameState['BlackTotal'] = gameState['BlackPawns'] + gameState['BlackRooks'] + gameState['BlackBishops'] + gameState['BlackKnights'] + gameState['BlackQueen'] + gameState['BlackKing']
+    #     gameState['WhitePawns'] = len(self.board.whitePieces[Piece.Pawn])
+    #     gameState['WhiteRooks'] = len(self.board.whitePieces[Piece.Rook])
+    #     gameState['WhiteBishops'] = len(self.board.whitePieces[Piece.Bishop])
+    #     gameState['WhiteKnights'] = len(self.board.whitePieces[Piece.Knight])
+    #     gameState['WhiteQueen'] = len(self.board.whitePieces[Piece.Queen])
+    #     gameState['WhiteKing'] = len(self.board.whitePieces[Piece.King])
+    #     gameState['WhiteTotal'] = gameState['WhitePawns'] + gameState['WhiteRooks'] + gameState['WhiteBishops'] + gameState['WhiteKnights'] + gameState['WhiteQueen'] + gameState['WhiteKing']
+
+    #     gameState['BlackPawns'] = len(self.board.blackPieces[Piece.Pawn])
+    #     gameState['BlackRooks'] = len(self.board.blackPieces[Piece.Rook])
+    #     gameState['BlackBishops'] = len(self.board.blackPieces[Piece.Bishop])
+    #     gameState['BlackKnights'] = len(self.board.blackPieces[Piece.Knight])
+    #     gameState['BlackQueen'] = len(self.board.blackPieces[Piece.Queen])
+    #     gameState['BlackKing'] = len(self.board.blackPieces[Piece.King])
+    #     gameState['BlackTotal'] = gameState['BlackPawns'] + gameState['BlackRooks'] + gameState['BlackBishops'] + gameState['BlackKnights'] + gameState['BlackQueen'] + gameState['BlackKing']
+
+    #     for rank in range(8):
+    #         for file in range(8):
+    #             square = self.board.squares[file][rank]
+    #             actualFile = self.__translateToFile(file)
+    #             gameState[actualFile + str(rank + 1) + '_color'] = square.color.value
+    #             gameState[actualFile + str(rank + 1) + '_piece'] = square.piece.value if square.piece != '' else ''
+
+    #     self.gameStates.append(gameState)
+
+    def __addGameState(self, move):
+        result = 1 if self.properties['Result'] == '1-0' else -1 if self.properties['Result'] == '0-1' else 0
+        gameState = { 'Result': result, 'Move': move }
 
         for rank in range(8):
             for file in range(8):
                 square = self.board.squares[file][rank]
                 actualFile = self.__translateToFile(file)
-                gameState[actualFile + str(rank + 1) + '_color'] = square.color.value
-                gameState[actualFile + str(rank + 1) + '_piece'] = square.piece.value if square.piece != '' else ''
+                piece = self.__getPiece(square)
+                gameState[actualFile + str(rank + 1)] = piece
 
         self.gameStates.append(gameState)
+
+    def __saveMove(self, castle):
+        if castle:
+            self.gameStates.pop()
+
+        else:
+            gameState = self.gameStates[-1]
+
+            gameState['Color'] = 1 if self.board.color == Color.White else 2
+            gameState['Piece'] = pieceValues[self.board.piece]
+            gameState['CurrentFile'] = self.board.currentFile
+            gameState['CurrentRank'] = self.board.currentRank
+            gameState['NewFile'] = self.board.newFile
+            gameState['NewRank'] = self.board.newRank

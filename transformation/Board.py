@@ -55,6 +55,13 @@ class Board:
 
             self.__setSquare(newFile, newRank, color, promotion)
 
+        self.color = color
+        self.piece = piece
+        self.currentFile = currentFile
+        self.currentRank = currentRank
+        self.newFile = newFile 
+        self.newRank = newRank
+
     def getPieceAtLocation(self, color, piece, file=None, rank=None):
         pieces = self.whitePieces[piece] if color == Color.White else self.blackPieces[piece]
 
