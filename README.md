@@ -14,11 +14,17 @@ This repository also contains folders for storing and exploring the data for the
 
 ### API Documentation
 
-There are 3 model endpoints that all take the same Json object:
+There are 5 model endpoints for predicting the outcome of the game that all take the same Json object:
 
 * `/prediction/linear` - `[POST]`
 * `/prediction/logistic` - `[POST]`
 * `/prediction/random_forest` - `[POST]`
+* `/prediction/dl_linear` - `[POST]`
+* `/prediction/convolution` - `[POST]`
+
+There is 1 endpoints for predicting an optimal move
+
+* `/prediction/move` - `[POST]`
 
 The POST body is a single level Json object with the total count for each type of piece for each player and the total number of pieces for the player in the form of `'[Black|White][Pawns|Rooks|Bishops|Knights|Queen|King|Total]'`
 

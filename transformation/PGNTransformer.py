@@ -22,7 +22,7 @@ propertyRegex = r'\[(.+) "(.+)"\]'
 #     return headers
 
 def createColumns():
-    headers = ['Result', 'Move', 'Turn']
+    headers = ['Result', 'Move', 'Color', 'Piece', 'CurrentFile', 'CurrentRank', 'NewFile', 'NewRank']
 
     for rank in range(8):
         for file in range(8):

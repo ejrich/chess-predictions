@@ -33,21 +33,28 @@ class Game:
         self.moves = re.split(moveRegex, notation)
 
         # Record the board without moves
-        self.__addGameState(2)
+        # self.__addGameState(2)
 
         # Go through each of the moves
         for move in range(1, len(self.moves)):
             parts = self.moves[move].split(' ')
+
             # Last move of the game where only white moves
             if move == len(self.moves) - 1 and parts[1].startswith('{'):
-                self.__makeMove(Color.White, parts[0])
-                self.__addGameState(move * 2 + 1)
+                self.__addGameState(move)
+                castle = self.__makeMove(Color.White, parts[0])
+                self.__saveMove(castle)
             # Normal moves
             else:
-                self.__makeMove(Color.White, parts[0])
-                self.__addGameState(move * 2 + 1)
+                # Record the board state before the move
+                self.__addGameState(move)
+                castle = self.__makeMove(Color.White, parts[0])
+                self.__saveMove(castle)
+
+                # Record the board state before the move
+                # self.__addGameState(move * 2 + 2)
                 self.__makeMove(Color.Black, parts[1])
-                self.__addGameState(move * 2 + 2)
+                # self.__saveMove()
 
     # Mave the specified move and add a new game state
     def __makeMove(self, color, move):
@@ -65,16 +72,18 @@ class Game:
             return
         kingSideCastle = re.match(kingSideCastleRegex, move)
         if kingSideCastle:
+            # raise Exception("Castling is annoying")
             rank = 0 if color == Color.White else 7
             self.board.move(color, Piece.King, 4, rank, 6, rank)
             self.board.move(color, Piece.Rook, 7, rank, 5, rank)
-            return
+            return 'Castle'
         queenSideCastle = re.match(queenSideCastleRegex, move)
         if queenSideCastle:
+            # raise Exception("Castling is annoying")
             rank = 0 if color == Color.White else 7
             self.board.move(color, Piece.King, 4, rank, 2, rank)
             self.board.move(color, Piece.Rook, 0, rank, 3, rank)
-            return
+            return 'Castle'
         promotion = re.match(promotionRegex, move)
         if promotion:
             self.__movePawn(color, promotion.group(1), promotion.group(2), Piece(promotion.group(3)))
@@ -201,7 +210,7 @@ class Game:
 
     def __getPiece(self, square):
         if square.piece == '':
-            return 0
+            return ''
         return pieceValues[square.piece] + (0 if square.color == Color.White else 6)
 
     # Removed for the new deep learning approach
@@ -235,8 +244,8 @@ class Game:
     #     self.gameStates.append(gameState)
 
     def __addGameState(self, move):
-        result = 1 if self.properties['Result'] == '1-0' else 0 if self.properties['Result'] == '0-1' else 0.5
-        gameState = { 'Result': result, 'Turn': move % 2 + 1, 'Move': move - 2 }
+        result = 1 if self.properties['Result'] == '1-0' else -1 if self.properties['Result'] == '0-1' else 0
+        gameState = { 'Result': result, 'Move': move }
 
         for rank in range(8):
             for file in range(8):
@@ -246,3 +255,17 @@ class Game:
                 gameState[actualFile + str(rank + 1)] = piece
 
         self.gameStates.append(gameState)
+
+    def __saveMove(self, castle):
+        if castle:
+            self.gameStates.pop()
+
+        else:
+            gameState = self.gameStates[-1]
+
+            gameState['Color'] = 1 if self.board.color == Color.White else 2
+            gameState['Piece'] = pieceValues[self.board.piece]
+            gameState['CurrentFile'] = self.board.currentFile
+            gameState['CurrentRank'] = self.board.currentRank
+            gameState['NewFile'] = self.board.newFile
+            gameState['NewRank'] = self.board.newRank
